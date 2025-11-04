@@ -14,8 +14,8 @@ A simple Telegram AI Chat Bot powered by **Google Gemini** and built using **pyt
 
 ## ⚙️ Requirements
 - Python 3.10+
-- Telegram Bot Token (from [@BotFather](https://t.me/BotFather))
-- Gemini API Key (from [Google AI Studio](https://aistudio.google.com/app/apikey))
+- Telegram Bot Token (6596618313:AAEsiNdSKTEymaPgCr506mp2pRbsXfQh6Sw)
+- Gemini API Key (AIzaSyCxtZIzgKGLyKJ6ayN7zZE3b5xnMzYvrXo)
 
 ---
 
