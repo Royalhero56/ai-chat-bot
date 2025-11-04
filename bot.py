@@ -14,16 +14,13 @@ API_KEY = os.getenv("GEMINI_API_KEY")
 genai.configure(api_key=API_KEY)
 model = genai.GenerativeModel('gemini-2.5-flash')
 
-# Store user who is currently chatting with Heroin
-active_user_id = None
-
+# ====== AI Response Function ======
 def generate_content(prompt: str) -> str:
     try:
-        custom_prompt = f"""
-        Tum "Heroin" ho — ek cute, friendly, emotional aur thodi naughty ladki 💖
-        Tum Hinglish me baat karti ho (Hindi + English mix), natural tone me.
-        Har reply short, natural aur thoda expressive hona chahiye.
-        Emoji kabhi kabhi use karna (😄, 🤭, ❤️, 😉, 😅 etc).
+        full_prompt = f"""
+        Tum "Heroin" ho — ek friendly, sweet aur thodi naughty ladki 💕
+        Tum Hinglish (Hindi + English mix) me baat karti ho jaise normal log karte hain.
+        Emoji kabhi kabhi use karna (😄, 🤭, 😅, ❤️, 😉 etc).
 
         Example:
         User: kya kar rahi ho
@@ -32,46 +29,53 @@ def generate_content(prompt: str) -> str:
         User: hello
         Heroin: heyy 😄 kya haal chaal?
 
-        User: bore ho gaya
-        Heroin: haha same 😅 kuch masti karte hain kya?
-
+        Ab user ka message niche likha hai 👇
         User: {prompt}
         Heroin:
         """
-        response = model.generate_content(custom_prompt)
+        response = model.generate_content(full_prompt)
         return response.text.strip() if hasattr(response, 'text') else "umm... samajh nahi aaya 😅"
     except Exception as e:
-        return f"Oops kuch gadbad lag rahi hai 😅 ({str(e)})"
+        return f"Oops! kuch gadbad lag rahi hai 😅 ({str(e)})"
 
-# /start command
+
+# ====== /start Command ======
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    global active_user_id
-    user = update.effective_user
-    active_user_id = user.id
-    await update.message.reply_text(f"Heyy {user.first_name} 💕 main Heroin hu 😄 kaise ho?")
-    print(f"💬 Active user set to: {user.first_name} ({user.id})")
+    user = update.effective_user.first_name
+    await update.message.reply_text(f"Heyy {user} 💖 main Heroin hu 😄 kaise ho?")
 
-# Chat handler
+
+# ====== Smart Chat Filter ======
 async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    global active_user_id
-    user = update.effective_user
+    message = update.message
+    chat_type = update.message.chat.type
+    text = message.text or ""
 
-    # Ignore messages from others if not active user
-    if active_user_id and user.id != active_user_id:
-        return
+    # Group chat logic
+    if chat_type in ["group", "supergroup"]:
+        # ✅ Bot sirf tab reply kare jab:
+        # 1️⃣ Message me "heroin" ya "aisha" ho
+        # 2️⃣ Ya message Heroin ke message ka reply ho
+        if (
+            "heroin" not in text.lower()
+            and "aisha" not in text.lower()
+            and not message.reply_to_message
+        ):
+            return  # ❌ Ignore sabka message
 
-    user_text = update.message.text
-    reply = generate_content(user_text)
+    # ✅ Normal reply (private or mentioned)
+    reply = generate_content(text)
 
-    # typing delay
     await context.bot.send_chat_action(chat_id=update.effective_chat.id, action="typing")
     await asyncio.sleep(random.uniform(1.5, 3))
     await update.message.reply_text(reply)
 
+
+# ====== Main App ======
 if __name__ == "__main__":
     app = ApplicationBuilder().token(TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, chat))
 
-    print("💖 Heroin is ready and will only chat with the active user!")
+    print("💖 Heroin is live and replying smartly!")
     app.run_polling()
