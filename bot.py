@@ -66,7 +66,18 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # ✅ Normal reply (private or mentioned)
     reply = generate_content(text)
 
-    await context.bot.send_chat_action(chat_id=update.effective_chat.id, action="typing")
+    from telegram.error import BadRequest, Forbidden, TimedOut, NetworkError
+
+async def safe_send_message(bot, chat_id, text):
+    try:
+        await bot.send_message(chat_id=chat_id, text=text)
+    except (BadRequest, Forbidden) as e:
+        print(f"⚠️ Cannot send message to {chat_id}: {e}")
+        # Agar user ne bot block, mute, ya group se remove kiya hai to crash nahi karega
+        pass
+    except (TimedOut, NetworkError):
+        print("🌐 Network issue, retrying later...")
+        pass
     await asyncio.sleep(random.uniform(1.5, 3))
     await update.message.reply_text(reply)
 
